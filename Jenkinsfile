@@ -14,7 +14,7 @@ pipeline {
         stage('Checkout Source') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/Sarvnoor-kaur/docker-jenikns-kubernetees.git'
+                url: 'https://github.com/Sarvnoor-kaur/2compose-jenkins-kubernetees.git'
             }
         }
 
