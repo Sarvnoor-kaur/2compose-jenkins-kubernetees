@@ -7,7 +7,7 @@ pipeline {
   }
 
   environment {
-    KUBECONFIG = '/root/.kube/config'
+    KUBECONFIG = 'C:\\Users\\jenkins\\.kube\\config'
   }
 
   stages {
@@ -22,10 +22,10 @@ pipeline {
       steps {
         script {
           echo 'Building backend image...'
-          sh 'docker build -t backend:latest ./backend'
+          bat 'docker build -t backend:latest .\\backend'
 
           echo 'Building frontend image...'
-          sh 'docker build -t frontend:latest ./frontend'
+          bat 'docker build -t frontend:latest .\\frontend'
         }
       }
     }
@@ -34,8 +34,8 @@ pipeline {
       steps {
         script {
           echo 'Applying Kubernetes deployment manifests...'
-          sh 'kubectl apply -f deployment.yml'
-          sh 'kubectl apply -f service.yml'
+          bat 'kubectl apply -f deployment.yml'
+          bat 'kubectl apply -f service.yml'
         }
       }
     }
@@ -44,9 +44,9 @@ pipeline {
       steps {
         script {
           echo 'Getting deployments, services, and pods...'
-          sh 'kubectl get deployments -o wide'
-          sh 'kubectl get services -o wide'
-          sh 'kubectl get pods -o wide'
+          bat 'kubectl get deployments -o wide'
+          bat 'kubectl get services -o wide'
+          bat 'kubectl get pods -o wide'
         }
       }
     }
