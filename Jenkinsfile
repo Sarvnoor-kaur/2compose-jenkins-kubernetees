@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   parameters {
-    string(name: 'REPO_URL', defaultValue: 'https://github.com/youruser/yourrepo.git', description: 'GitHub repository URL')
+    string(name: 'REPO_URL', defaultValue: 'https://github.com/Sarvnoor-kaur/2compose-jenkins-kubernetees.git', description: 'GitHub repository URL')
     string(name: 'BRANCH', defaultValue: 'main', description: 'Git branch to build')
   }
 
