@@ -1,19 +1,9 @@
-// pipeline 
 pipeline {
-  agent any
+    agent any
 
-  parameters {
-    string(name: 'REPO_URL', defaultValue: 'https://github.com/Sarvnoor-kaur/docker-jenikns-kubernetees.git', description: 'GitHub repository URL')
-    string(name: 'BRANCH', defaultValue: 'main', description: 'Git branch to build')
-    string(name: 'KUBECONFIG_PATH', defaultValue: 'C:\\ProgramData\\Jenkins\\.kube\\config', description: 'Windows kubeconfig path')
-    string(name: 'DOCKERHUB_CREDENTIALS_ID', defaultValue: 'dockerhub', description: 'Jenkins Docker Hub credentials ID')
-    string(name: 'BACKEND_IMAGE_NAME', defaultValue: 'sarvnoorkaur/backend', description: 'Docker Hub backend image name')
-    string(name: 'FRONTEND_IMAGE_NAME', defaultValue: 'sarvnoorkaur/frontend', description: 'Docker Hub frontend image name')
-    string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker image tag')
-  }
-
-  environment {
-    KUBECONFIG = "${params.KUBECONFIG_PATH}"
+    environment {
+        FRONTEND_IMAGE = "sarvnoorkaur/frontend-app:latest"
+        BACKEND_IMAGE  = "sarvnoorkaur/backend-app:latest"
 
         // Kubernetes config (Windows Jenkins fix)
         KUBECONFIG = "C:\\ProgramData\\Jenkins\\.kube\\config"
@@ -28,12 +18,20 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        // ================= BUILD IMAGES =================
+        stage('Build Docker Images') {
             steps {
-                bat "docker build -t %IMAGE_NAME%:%IMAGE_TAG% ."
+                script {
+                    echo "Building backend image..."
+                    bat "docker build -t %BACKEND_IMAGE% ./backend"
+
+                    echo "Building frontend image..."
+                    bat "docker build -t %FRONTEND_IMAGE% ./frontend"
+                }
             }
         }
 
+        // ================= DOCKER LOGIN =================
         stage('Docker Login') {
             steps {
                 withCredentials([usernamePassword(
@@ -48,52 +46,54 @@ pipeline {
             }
         }
 
-        stage('Push Image') {
+        // ================= PUSH IMAGES =================
+        stage('Push Images') {
             steps {
-                bat "docker push %IMAGE_NAME%:%IMAGE_TAG%"
+                script {
+                    echo "Pushing backend image..."
+                    bat "docker push %BACKEND_IMAGE%"
+
+                    echo "Pushing frontend image..."
+                    bat "docker push %FRONTEND_IMAGE%"
+                }
             }
         }
 
+        // ================= DEPLOY TO KUBERNETES =================
         stage('Deploy To Kubernetes') {
             steps {
                 bat """
-                    echo Using kubeconfig: %KUBECONFIG%
+                    set KUBECONFIG=C:\\ProgramData\\Jenkins\\.kube\\config
 
-                    REM Apply deployment and service
+                    echo Applying Kubernetes manifests...
                     kubectl apply -f deployment.yaml
                     kubectl apply -f service.yaml
 
-                    REM Update image in deployment
+                    echo Updating frontend image...
                     kubectl set image deployment/docker-jenknins-kuber-deployment ^
-                    web-container=%IMAGE_NAME%:%IMAGE_TAG%
+                    web-container=%FRONTEND_IMAGE%
 
-                    REM Wait for rollout
                     kubectl rollout status deployment/docker-jenknins-kuber-deployment
                 """
             }
         }
 
-        // 🔥 NEW STAGE ADDED HERE
+        // ================= VERIFY =================
         stage('Verify Deployment') {
             steps {
                 bat """
-                    echo ===== Checking Kubernetes Resources =====
+                    echo ===== Kubernetes Status =====
 
-                    echo --- Deployments ---
                     kubectl get deployments
-
-                    echo --- Pods ---
                     kubectl get pods
-
-                    echo --- Services ---
                     kubectl get svc
 
-                    echo --- Rollout Status ---
                     kubectl rollout status deployment/docker-jenknins-kuber-deployment
                 """
             }
         }
 
+        // ================= CHECK CLUSTER =================
         stage('Check Kubernetes') {
             steps {
                 bat "kubectl get nodes"
