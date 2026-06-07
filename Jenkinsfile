@@ -63,7 +63,7 @@ pipeline {
         stage('Deploy To Kubernetes') {
             steps {
                 bat """
-                    set KUBECONFIG=C:\\ProgramData\\Jenkins\\.kube\\config
+            
 
                     echo Applying Kubernetes manifests...
                     kubectl apply -f deployment.yaml
